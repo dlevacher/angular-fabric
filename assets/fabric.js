@@ -6,8 +6,8 @@ angular.module('common.fabric', [
 ])
 
 .factory('Fabric', [
-	'FabricWindow', '$timeout', '$window', 'FabricCanvas', 'FabricDirtyStatus',
-	function(FabricWindow, $timeout, $window, FabricCanvas, FabricDirtyStatus) {
+	'FabricWindow', '$timeout', '$window', '$rootScope', 'FabricCanvas', 'FabricDirtyStatus',
+	function(FabricWindow, $timeout, $window, $rootScope, FabricCanvas, FabricDirtyStatus) {
 
 	return function(options) {
 
@@ -126,7 +126,7 @@ angular.module('common.fabric', [
 			canvas.calcOffset();
 			canvas.renderAll();
 			self.renderCount++;
-			console.log('Render cycle:', self.renderCount);
+			// console.log('Render cycle:', self.renderCount);
 		};
 
 		self.setCanvas = function(newCanvas) {
@@ -696,6 +696,9 @@ angular.module('common.fabric', [
 		//
 		// JSON
 		// ==============================================================
+		self.toJSON = function() {
+			return JSON.stringify(canvas);
+		};
 		self.getJSON = function() {
 			var initialCanvasScale = self.canvasScale;
 			self.canvasScale = 1;
@@ -711,6 +714,7 @@ angular.module('common.fabric', [
 
 		self.loadJSON = function(json) {
 			self.setLoading(true);
+			canvas.clear();
 			canvas.loadFromJSON(json, function() {
 				$timeout(function() {
 					self.setLoading(false);
@@ -873,6 +877,16 @@ angular.module('common.fabric', [
 					self.updateActiveObjectOriginals();
 					self.setDirty(true);
 				});
+	            // console.info('object:modified');
+				$rootScope.$broadcast('canvas:modified');
+			});
+			canvas.on('object:added', function() {
+	            // console.info('object:added');
+				$rootScope.$broadcast('canvas:modified');
+			});
+			canvas.on('object:removed', function() {
+	            // console.info('object:removed');
+				$rootScope.$broadcast('canvas:modified');
 			});
 		};
 
