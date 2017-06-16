@@ -78,6 +78,20 @@ angular.module('common.fabric.directive', [
 				}
 			});
 
+			$scope.$watch('fabric.selectedObject.stroke', function(newVal) {
+				if (typeof newVal === 'string') {
+					$scope.fabric.setStroke(newVal);
+					$scope.fabric.render();
+				}
+			});
+
+			$scope.$watch('fabric.selectedObject.strokeWidth', function(newVal) {
+				if (typeof newVal === 'string' || typeof newVal === 'number') {
+					$scope.fabric.setStrokeWidth(newVal);
+					$scope.fabric.render();
+				}
+			});
+
 			$scope.$watch('fabric.selectedObject.tint', function(newVal) {
 				if (typeof newVal === 'string') {
 					$scope.fabric.setTint(newVal);

@@ -218,7 +218,7 @@ angular.module('common.fabric', [
 		//
 		// Image
 		// ==============================================================
-		self.addImage = function(imageURL) {
+		self.addImage = function(imageURL, callback) {
 			fabric.Image.fromURL(imageURL, function(object) {
 				object.id = self.createId();
 
@@ -236,13 +236,14 @@ angular.module('common.fabric', [
 				object.applyFilters(canvas.renderAll.bind(canvas));
 
 				self.addObjectToCanvas(object);
+				if (callback) callback(object);
 			}, self.imageDefaults);
 		};
 
 		//
 		// Shape
 		// ==============================================================
-		self.addShape = function(svgURL) {
+		self.addShape = function(svgURL, callback) {
 			fabric.loadSVGFromURL(svgURL, function(objects) {
 				var object = fabric.util.groupSVGElements(objects, self.shapeDefaults);
 				object.id = self.createId();
@@ -260,6 +261,7 @@ angular.module('common.fabric', [
 				}
 
 				self.addObjectToCanvas(object);
+				if (callback) callback(object);
 			});
 		};
 
@@ -558,6 +560,62 @@ angular.module('common.fabric', [
 		};
 
 		//
+		// Active Object Stroke Color
+		// ==============================================================
+		self.getStroke = function() {
+			return getActiveStyle('stroke');
+		};
+
+		self.setStroke = function(value) {
+			var object = canvas.getActiveObject();
+			if (object) {
+				if (object.type === 'text') {
+					setActiveStyle('stroke', value);
+				} else {
+					self.setStrokePath(object, value);
+				}
+			}
+		};
+
+		self.setStrokePath = function(object, value) {
+			if (object.isSameColor && object.isSameColor() || !object.paths) {
+				object.setStroke(value);
+			} else if (object.paths) {
+				for (var i = 0; i < object.paths.length; i++) {
+					object.paths[i].setStroke(value);
+				}
+			}
+		};
+
+		//
+		// Active Object Stroke Width
+		// ==============================================================
+		self.getStrokeWidth = function() {
+			return getActiveStyle('strokeWidth');
+		};
+
+		self.setStrokeWidth = function(value) {
+			var object = canvas.getActiveObject();
+			if (object) {
+				if (object.type === 'text') {
+					setActiveStyle('strokeWidth', value);
+				} else {
+					self.setStrokeWidthPath(object, value);
+				}
+			}
+		};
+
+		self.setStrokeWidthPath = function(object, value) {
+			if (object.isSameColor && object.isSameColor() || !object.paths) {
+				object.setStrokeWidth(value);
+			} else if (object.paths) {
+				for (var i = 0; i < object.paths.length; i++) {
+					object.paths[i].setStrokeWidth(value);
+				}
+			}
+		};
+
+		//
 		// Canvas Zoom
 		// ==============================================================
 		self.resetZoom = function() {
@@ -653,6 +711,8 @@ angular.module('common.fabric', [
 			self.selectedObject.opacity = self.getOpacity();
 			self.selectedObject.fontFamily = self.getFontFamily();
 			self.selectedObject.fill = self.getFill();
+			self.selectedObject.stroke = self.getStroke();
+			self.selectedObject.strokeWidth = self.getStrokeWidth();
 			self.selectedObject.tint = self.getTint();
 		};
 
@@ -701,7 +761,6 @@ angular.module('common.fabric', [
 		};
 		self.getJSON = function() {
 			var initialCanvasScale = self.canvasScale;
-			self.canvasScale = 1;
 			self.resetZoom();
 
 			var json = JSON.stringify(canvas.toJSON(self.JSONExportProperties));
@@ -723,6 +782,25 @@ angular.module('common.fabric', [
 						self.disableEditing();
 					}
 
+					self.setCanvasSize(self.canvasOriginalWidth, self.canvasOriginalHeight);
+					self.render();
+				});
+			});
+		};
+
+		self.loadSVG = function(svg) {
+			self.setLoading(true);
+			canvas.clear();
+			fabric.loadSVGFromString(svg, function(objects, options) {
+				$timeout(function() {
+					self.setLoading(false);
+
+					if (!self.editable) {
+						self.disableEditing();
+					}
+					var obj = fabric.util.groupSVGElements(objects, options);
+					canvas.add(obj).renderAll();
+
 					self.render();
 				});
 			});
@@ -731,12 +809,12 @@ angular.module('common.fabric', [
 		//
 		// Download Canvas
 		// ==============================================================
-		self.getCanvasData = function() {
-			var data = canvas.toDataURL({
+		self.getCanvasData = function(options) {
+			var data = canvas.toDataURL(angular.extend({
 				width: canvas.getWidth(),
 				height: canvas.getHeight(),
 				multiplier: self.downloadMultipler
-			});
+			}, options));
 
 			return data;
 		};
@@ -750,6 +828,66 @@ angular.module('common.fabric', [
 			return blobUrl;
 		};
 
+		self.downloadImage = function(name) {
+			// Stops active object outline from showing in image
+			self.deactivateAll();
+
+			var initialCanvasScale = self.canvasScale;
+			self.resetZoom();
+
+			// Click an artifical anchor to 'force' download.
+			var filename = name + '.png';
+			var url = self.getCanvasBlob();
+			$timeout(function() {
+				var link = document.createElement('a');
+				document.body.appendChild(link);
+	    		link.style = "display: none";
+				// link.target = '_blank';
+				link.download = filename;
+				link.href = url;
+				link.click();
+				setTimeout(function(){
+					URL.revokeObjectURL(url);
+					document.body.removeChild(link);
+				});
+			});
+
+			self.canvasScale = initialCanvasScale;
+			self.setZoom();
+		};
+		self.downloadSVG = function(name) {
+			// Stops active object outline from showing in image
+			self.deactivateAll();
+
+			var initialCanvasScale = self.canvasScale;
+			self.resetZoom();
+
+			// Click an artifical anchor to 'force' download.
+			var filename = name + '.svg';
+			var data = canvas.toSVG({
+				width: canvas.getWidth(),
+				height: canvas.getHeight(),
+				multiplier: self.downloadMultipler
+			});
+			var blob = new Blob([data], {'type': 'image/svg+xml'});
+			var url = URL.createObjectURL(blob);
+			$timeout(function() {
+				var link = document.createElement('a');
+				document.body.appendChild(link);
+	    		link.style = "display: none";
+				// link.target = '_blank';
+				link.download = filename;
+				link.href = url;
+				link.click();
+				setTimeout(function(){
+					URL.revokeObjectURL(url);
+					document.body.removeChild(link);
+				});
+			});
+
+			self.canvasScale = initialCanvasScale;
+			self.setZoom();
+		};
 		self.download = function(name) {
 			// Stops active object outline from showing in image
 			self.deactivateAll();
@@ -758,11 +896,22 @@ angular.module('common.fabric', [
 			self.resetZoom();
 
 			// Click an artifical anchor to 'force' download.
-			var link = document.createElement('a');
-			var filename = name + '.png';
-			link.download = filename;
-			link.href = self.getCanvasBlob();
-			link.click();
+			var filename = name + '.json';
+			var blob = new Blob([this.toJSON()], {'type': 'application/json'});
+			var url = URL.createObjectURL(blob);
+			$timeout(function() {
+				var link = document.createElement('a');
+				document.body.appendChild(link);
+	    		link.style = "display: none";
+				// link.target = '_blank';
+				link.download = filename;
+				link.href = url;
+				link.click();
+				setTimeout(function(){
+					URL.revokeObjectURL(url);
+					document.body.removeChild(link);
+				});
+			});
 
 			self.canvasScale = initialCanvasScale;
 			self.setZoom();
