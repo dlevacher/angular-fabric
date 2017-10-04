@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "homepage": "https://github.com/dlevacher/angular-fabric",
   "description": "Angular.js module wrapper for Fabric.js",
-  "main": [ "./assets/fabric.js", "./assets/fabricCanvas.js", "./assets/fabricConstants.js", "./assets/fabricDirective.js", "./assets/fabricDirtyStatus.js", "./assets/fabricUtilities.js", "./assets/fabricWindow.js" ],
+  "main": [ "./assets/fabric.js", "./assets/fabricCanvas.js", "./assets/fabricConstants.js", "./assets/fabricDirective.js", "./assets/fabricDirtyStatus.js", "./assets/fabricUtilities.js", "./assets/fabricWindow.js", "./assets/fabricQRCode.js" ],
   "keywords": [
     "Angular.js",
     "Fabric.js"

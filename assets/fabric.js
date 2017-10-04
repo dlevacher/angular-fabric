@@ -28,6 +28,7 @@ angular.module('common.fabric', [
 			initialized: false,
 			userHasClickedCanvas: false,
 			downloadMultipler: 2,
+			qrcodeDefaults: {},
 			imageDefaults: {},
 			textDefaults: {},
 			shapeDefaults: {},
@@ -82,6 +83,12 @@ angular.module('common.fabric', [
 		function setActiveProp(name, value) {
 			var object = canvas.getActiveObject();
 			object.set(name, value);
+			self.render();
+		}
+
+		function setCoords() {
+			var object = canvas.getActiveObject();
+			object.setCoords();
 			self.render();
 		}
 
@@ -216,6 +223,17 @@ angular.module('common.fabric', [
 		};
 
 		//
+		// QRCode
+		// ==============================================================
+		self.addQRCode = function(str) {
+			str = str || 'New Text';
+			var object = new FabricWindow.QRCode(str, self.qrcodeDefaults);
+			object.id = self.createId();
+
+			self.addObjectToCanvas(object);
+		};
+
+		//
 		// Image
 		// ==============================================================
 		self.addImage = function(imageURL, callback) {
@@ -317,6 +335,30 @@ angular.module('common.fabric', [
 
 		self.setFontFamily = function(value) {
 			setActiveProp('fontFamily', value.toLowerCase());
+		};
+
+		//
+		// Top
+		// ==============================================================
+		self.getTop = function() {
+			return getActiveProp('top');
+		};
+
+		self.setTop = function(value) {
+			setActiveProp('top', parseFloat(value, 10));
+			self.render();
+		};
+
+		//
+		// Left
+		// ==============================================================
+		self.getLeft = function() {
+			return getActiveProp('left');
+		};
+
+		self.setLeft = function(value) {
+			setActiveProp('left', parseFloat(value, 10));
+			self.render();
 		};
 
 		//

@@ -43,6 +43,20 @@ angular.module('common.fabric.directive', [
 				}
 			});
 
+			$scope.$watch('fabric.selectedObject.top', function(newVal) {
+				if (typeof newVal === 'string' || typeof newVal === 'number') {
+					$scope.fabric.setTop(newVal);
+					$scope.fabric.render();
+				}
+			});
+
+			$scope.$watch('fabric.selectedObject.left', function(newVal) {
+				if (typeof newVal === 'string' || typeof newVal === 'number') {
+					$scope.fabric.setLeft(newVal);
+					$scope.fabric.render();
+				}
+			});
+
 			$scope.$watch('fabric.selectedObject.lineHeight', function(newVal) {
 				if (typeof newVal === 'string' || typeof newVal === 'number') {
 					$scope.fabric.setLineHeight(newVal);
