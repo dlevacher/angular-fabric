@@ -29,6 +29,7 @@ angular.module('common.fabric', [
 			userHasClickedCanvas: false,
 			downloadMultipler: 2,
 			qrcodeDefaults: {},
+			barcodeDefaults: {},
 			imageDefaults: {},
 			textDefaults: {},
 			shapeDefaults: {},
@@ -234,6 +235,17 @@ angular.module('common.fabric', [
 		};
 
 		//
+		// BarCode
+		// ==============================================================
+		self.addBarCode = function(str, options) {
+			str = str || 'New Text';
+			var object = new FabricWindow.BarCode(str, angular.extend(self.barcodeDefaults, options));
+			object.id = self.createId();
+
+			self.addObjectToCanvas(object);
+		};
+
+		//
 		// Image
 		// ==============================================================
 		self.addImage = function(imageURL, callback) {
@@ -303,6 +315,18 @@ angular.module('common.fabric', [
 		};
 
 		//
+		// Display value
+		// ==============================================================
+		self.getDisplayValue = function() {
+			return getActiveProp('displayValue');
+		};
+
+		self.setDisplayValue = function(value) {
+			// setActiveProp('displayValue', parseInt(value));
+			self.render();
+		};
+
+		//
 		// Font Size
 		// ==============================================================
 		self.getFontSize = function() {
@@ -358,6 +382,30 @@ angular.module('common.fabric', [
 
 		self.setLeft = function(value) {
 			setActiveProp('left', parseFloat(value, 10));
+			self.render();
+		};
+
+		//
+		// Height
+		// ==============================================================
+		self.getHeight = function() {
+			return getActiveProp('top');
+		};
+
+		self.setHeight = function(value) {
+			setActiveProp('top', parseFloat(value, 10));
+			self.render();
+		};
+
+		//
+		// Width
+		// ==============================================================
+		self.getWidth = function() {
+			return getActiveProp('left');
+		};
+
+		self.setWidth = function(value) {
+			setActiveProp('width', parseFloat(value, 10));
 			self.render();
 		};
 

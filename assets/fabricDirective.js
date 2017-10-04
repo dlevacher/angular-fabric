@@ -36,6 +36,13 @@ angular.module('common.fabric.directive', [
 				}
 			});
 
+			$scope.$watch('fabric.selectedObject.displayValue', function(newVal) {
+				if (typeof newVal === 'boolean') {
+					$scope.fabric.setDisplayValue(newVal);
+					$scope.fabric.render();
+				}
+			});
+
 			$scope.$watch('fabric.selectedObject.fontSize', function(newVal) {
 				if (typeof newVal === 'string' || typeof newVal === 'number') {
 					$scope.fabric.setFontSize(newVal);

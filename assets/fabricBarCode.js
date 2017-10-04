@@ -15,43 +15,36 @@
         return;
     }
 
-    if (!global.QRCode) {
-        fabric.warn('QRCode is not defined.');
+    if (!global.JsBarcode) {
+        fabric.warn('JsBarcode is not defined.');
         return;
     }
 
-    if (global.fabric.QRCode) {
-        fabric.warn('fabric.QRCode is already defined.');
+    if (global.fabric.BarCode) {
+        fabric.warn('fabric.BarCode is already defined.');
         return;
     }
 
     /**
-    * QRCode class
-    * @class fabric.QRCode
+    * BarCode class
+    * @class fabric.BarCode
     * @extends fabric.Image
-    * @see {@link fabric.QRCode#initialize} for constructor definition
+    * @see {@link fabric.BarCode#initialize} for constructor definition
     */
-    fabric.QRCode = fabric.util.createClass(fabric.Image, /** @lends fabric.QRCode.prototype */ {
+    fabric.BarCode = fabric.util.createClass(fabric.Image, /** @lends fabric.BarCode.prototype */ {
 
         /**
          * Type of an object
          * @type String
          * @default
          */
-         type: 'QRCode',
+         type: 'BarCode',
 
         /**
          * @type String
          * @default
          */
          text: '',
-
-        /**
-         * @see https://davidshimjs.github.io/qrcodejs/
-         * @type String
-         * @default QRCode.CorrectLevel.H
-         */
-         correctLevel : QRCode.CorrectLevel.H||'',
 
         /**
          * private
@@ -61,37 +54,53 @@
 
         /**
          * private
-         * @type QRCode
-         */
-         _qrcode: null,
-
-        /**
-         * private
          * @type String
          */
          _lastText: null,
 
         /**
+         * private
+         * @type Object
+         */
+         _lastOptions: null,
+
+        /**
          * Constructor
          * @param {HTMLImageElement | String} element Image element
          * @param {Object} [options] Options object
-         * @return {fabric.QRCode} thisArg
+         * @return {fabric.BarCode} thisArg
          */
          initialize: function(text, options) {
             var options = extend({ 
-                scaleX: 0.5,
-                scaleY: 0.5
+                // scaleX: 0.5,
+                // scaleY: 0.5,
+                format: 'auto',
+                fontFamily: 'OCRB',
+                displayValue: false
             }, options);
+            this.setOptions(options);
 
             this.text = text || '';
             this._lastText = this.text;
-            this._el = document.createElement("div");
-            this._qrcode = new QRCode(this._el, {
-                correctLevel: options.correctLevel || this.correctLevel
-            });
-            this._qrcode.makeCode(this.text);
+            this._lastOptions = this.getOptions();
+            this._el = document.createElement("canvas");
+            this._updateBarCode();
+            // var base64Data = this._el.toDataURL('image/jpg');
 
-            this.callSuper('initialize', this._el.querySelector('canvas'), options);
+            this.callSuper('initialize', this._el, options);
+        },
+
+        getText: function() {
+            return ((this.format||'') == 'CODE128' ? '\xCF' : '') + (this.text);
+        },
+
+        getOptions: function() {
+            return ({
+                format: this.format||'auto',
+                font: this.fontFamily||'OCRB',
+                lineColor: this.fill,
+                displayValue: this.displayValue
+            });
         },
 
         /**
@@ -102,7 +111,9 @@
          toObject: function(propertiesToInclude) {
             return extend(this.callSuper('toObject', propertiesToInclude), {
                 text: this.text,
-                correctLevel: this.correctLevel
+                format: this.format,
+                fontFamily: this.fontFamily,
+                displayValue: this.displayValue
             });
         },
 
@@ -120,21 +131,31 @@
         */
         _render: function(ctx, noTransform) {
             if (this._needsUpdate())
-                this._updateQRCode();
+                this._updateBarCode();
             this.callSuper('_render', ctx, noTransform);
         },
         /**
         * @private, needed to check if image needs redraw
         */
         _needsUpdate: function() {
-            return (this.text !== this._lastText);
+            return (this.text !== this._lastText) || (JSON.stringify(this.getOptions()) !== JSON.stringify(this._last));
         },
 
-        _updateQRCode: function() {
-            this._qrcode.clear();
-            this._qrcode.makeCode(this.text);
+        _updateBarCode: function() {
+            var text = this.getText();
+            if (text.length && text.length > 0) {
+                try {
+                    JsBarcode(this._el, this.getText(), this.getOptions());
+                }
+                catch (e) {
+                    console.error(e);
+                }
+            }
+            else {
+                fabric.warn('Invalid text');
+            }
             this._lastText = this.text;
-            this.setElement(this._el.querySelector('canvas'));
+            this._lastOptions = this.getOptions();
         },
 
         setText: function(text) {
@@ -143,13 +164,13 @@
     });
 
     /**
-    * Creates an instance of fabric.QRCode from its object representation
+    * Creates an instance of fabric.BarCode from its object representation
     * @static
     * @param {Object} object Object to create an instance from
     * @param {Function} [callback] Callback to invoke when an image instance is created
     */
-    fabric.QRCode.fromObject = function(object, callback) {
-        return new fabric.QRCode(object.text, clone(object));
+    fabric.BarCode.fromObject = function(object, callback) {
+        return new fabric.BarCode(object.text, clone(object));
     };
 })(typeof exports !== 'undefined' ? exports : this);
 
